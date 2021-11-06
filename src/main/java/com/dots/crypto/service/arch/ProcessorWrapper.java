@@ -1,6 +1,8 @@
 package com.dots.crypto.service.arch;
 
 import lombok.*;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.Date;
 
@@ -9,7 +11,7 @@ import java.util.Date;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class Wrapper<T> {
+public class ProcessorWrapper<T extends BotApiMethod<Message>> {
     private long executionTime;
     private Date startTime;
     private Date endTime;

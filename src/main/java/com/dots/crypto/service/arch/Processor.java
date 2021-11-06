@@ -1,91 +1,83 @@
 package com.dots.crypto.service.arch;
 
+import com.dots.crypto.service.response.MessageBuilder;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Date;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
-public abstract class Processor<T> {
-    private final ExecutorService executor;
+public abstract class Processor<T extends BotApiMethod<Message>> {
+    protected final String DEFAULT_RESPONSE = "Успешно";
 
-    protected abstract Wrapper<T> before(final Update update,
-                                         final TelegramLongPollingBot telegramBot,
-                                         final Wrapper<T> result) throws Exception;
+    protected abstract ProcessorWrapper<T> before(final Update update,
+                                                  final TelegramLongPollingBot telegramBot,
+                                                  final ProcessorWrapper<T> result) throws Exception;
 
-    protected abstract Wrapper<T> exec(final Update update,
-                                       final TelegramLongPollingBot telegramBot,
-                                       final Wrapper<T> result) throws Exception;
+    protected abstract ProcessorWrapper<T> exec(final Update update,
+                                                final TelegramLongPollingBot telegramBot,
+                                                final ProcessorWrapper<T> result) throws Exception;
 
-    protected abstract Wrapper<T> after(final Update update,
-                                        final TelegramLongPollingBot telegramBot,
-                                        final Wrapper<T> result) throws Exception;
+    protected abstract ProcessorWrapper<T> after(final Update update,
+                                                 final TelegramLongPollingBot telegramBot,
+                                                 final ProcessorWrapper<T> result) throws Exception;
 
-    protected Processor() {
-        final AtomicLong threadCounter = new AtomicLong(0);
-        this.executor = Executors.newCachedThreadPool(r -> {
-            final Thread x = new Thread(r);
-
-            x.setDaemon(true);
-            x.setPriority(Thread.MAX_PRIORITY);
-            x.setName("processor_" + threadCounter.incrementAndGet());
-
-            return x;
-        });
+    protected final String[] extractArgs(final String text) {
+        return text.trim().split(" ");
     }
 
-    public void executeSeq(final Update update,
-                           final TelegramLongPollingBot telegramBot) {
-        log.info("Processing command -> " + this.getClass().getSimpleName());
+    @SneakyThrows
+    public final void execute(final Update update,
+                        final TelegramLongPollingBot telegramBot) {
+        ProcessorWrapper<T> result = initializeWrapper(update, telegramBot);
 
-        Wrapper<T> result = initializeWrapper(update, telegramBot);
+        log.info("Run command -> " + result.toString());
 
         try {
             result = this.before(update, telegramBot, result);
             result = this.exec(update, telegramBot, result);
             result = this.after(update, telegramBot, result);
+
+            telegramBot.execute(result.getResult());
+
         } catch (Throwable t) {
             result.setException(t);
+            telegramBot.execute(MessageBuilder.message(update.getMessage().getChatId(), (t.getMessage() == null
+                    ? "Произошла непредвиденная ошибка, попробуйте позже!"
+                    : t.getMessage())));
         } finally {
             finalizeWrapper(result);
         }
     }
 
-    public void executePar(final Update update,
-                           final TelegramLongPollingBot telegramBot) {
-        CompletableFuture.runAsync(
-                () -> this.executeSeq(update, telegramBot),
-                executor
-        );
-    }
-
-    private Wrapper<T> initializeWrapper(final Update update,
-                                         final TelegramLongPollingBot telegramBot) {
-        final Wrapper<T> result = new Wrapper<>();
+    private ProcessorWrapper<T> initializeWrapper(final Update update,
+                                                  final TelegramLongPollingBot telegramBot) {
+        final ProcessorWrapper<T> result = new ProcessorWrapper<>();
 
         result.setBotName(telegramBot.getClass().getSimpleName());
         result.setCommandName(this.getClass().getSimpleName());
-
         result.setStartTime(new Date());
-
         result.setCalledBy(update.getMessage().getFrom().getId());
 
         return result;
     }
 
-    private void finalizeWrapper(final Wrapper<T> result) {
+    private void finalizeWrapper(final ProcessorWrapper<T> result) {
         result.setEndTime(new Date());
         result.setExecutionTime(result.getEndTime().getTime() - result.getStartTime().getTime());
 
         if (result.getException() == null) {
             log.info("Successfully processing command -> " + result.toString());
         } else {
-            log.error("Error while processing command -> " + result.toString());
+            if (result.getException() instanceof RuntimeException) {
+                log.warn("Error while processing command -> " + result.toString(), result.getException());
+            } else {
+                log.error("Error while processing command -> " + result.toString(), result.getException());
+            }
         }
     }
 }

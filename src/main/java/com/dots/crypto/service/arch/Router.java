@@ -2,7 +2,7 @@ package com.dots.crypto.service.arch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -15,9 +15,7 @@ import java.util.Map;
 public class Router {
     private final Map<Class<?>, Processor<?>> commands;
 
-    @Value("${telegram.asyncmode}")
-    private boolean asyncMode;
-
+    @Async("processor_exec")
     public void execute(final Update update,
                         final TelegramLongPollingBot telegramBot) {
         log.info("Received update -> " + update.toString());
@@ -28,11 +26,7 @@ public class Router {
         final Processor<?> processor = commands.get(type.getClazz());
 
         if (processor != null) {
-            if (asyncMode) {
-                processor.executePar(update, telegramBot);
-            } else {
-                processor.executeSeq(update, telegramBot);
-            }
+            processor.execute(update, telegramBot);
         } else {
             log.info("Processor -> " + type + " is nullable or disable");
         }
@@ -45,7 +39,7 @@ public class Router {
                 text = text.toLowerCase().trim();
 
                 for (final CType command : CType.values()) {
-                    if (command.getMessage().startsWith(text)) {
+                    if (text.startsWith(command.getMessage())) {
                         return command;
                     }
                 }

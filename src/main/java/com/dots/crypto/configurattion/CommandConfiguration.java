@@ -2,7 +2,6 @@ package com.dots.crypto.configurattion;
 
 import com.dots.crypto.service.arch.Processor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,7 +12,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Configuration
-@ConditionalOnProperty(value = "telegram.commands.start")
 public class CommandConfiguration {
 
     @Bean
