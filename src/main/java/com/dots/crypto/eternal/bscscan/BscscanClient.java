@@ -2,7 +2,6 @@ package com.dots.crypto.eternal.bscscan;
 
 import com.dots.crypto.eternal.common.ApiClient;
 import com.dots.crypto.eternal.common.ApiResponse;
-import com.dots.crypto.eternal.common.ApiRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -16,7 +15,7 @@ import java.lang.reflect.Modifier;
 
 @Slf4j
 @Component
-public class BscscanClient implements ApiClient {
+public class BscscanClient implements ApiClient<ApiResponse<?>, BscscanApiRequest<?>> {
     private final static String url = "https://api.bscscan.com/api";
     private final UrlBuilder urlBuilder = new UrlBuilder();
     private final HttpClient client;
@@ -29,7 +28,7 @@ public class BscscanClient implements ApiClient {
     }
 
     @Override
-    public <T, R extends ApiRequest<T>> ApiResponse<T> execute(final R request) throws IOException {
+    public ApiResponse<?> execute(final BscscanApiRequest<?> request) throws IOException {
         final String url = urlBuilder.buildUrl(request);
         final HttpGet req = new HttpGet(url);
 
@@ -39,11 +38,11 @@ public class BscscanClient implements ApiClient {
     private class UrlBuilder {
         private final static String KEY_PARAM = "&apikey=";
         private final static String ACTION_PARAM = "&action=";
-        private final static String MODULE_PARAMS = "?module=";
+        private final static String MODULE_PARAM = "?module=";
 
-        private <T, R extends ApiRequest<T>> String buildUrl(final R request) {
+        private String buildUrl(final BscscanApiRequest<?> request) {
             final StringBuilder result = new StringBuilder(url);
-            result.append(MODULE_PARAMS).append(request.getModule().getParam());
+            result.append(MODULE_PARAM).append(request.getModule().getParam());
             result.append(KEY_PARAM).append(token);
             result.append(ACTION_PARAM).append(request.getAction().getAction());
 

@@ -1,17 +1,17 @@
-package com.dots.crypto.service.command;
+package com.dots.crypto.service.command.impl;
 
 import com.dots.crypto.exception.CommandLogicException;
 import com.dots.crypto.exception.CommandSyntaxException;
+import com.dots.crypto.model.Process;
 import com.dots.crypto.model.Subscription;
-import com.dots.crypto.model.User;
+import com.dots.crypto.model.TelegramUser;
 import com.dots.crypto.model.Token;
 import com.dots.crypto.repository.SubscriptionRepository;
-import com.dots.crypto.repository.UserRepository;
+import com.dots.crypto.repository.TelegramUserRepository;
 import com.dots.crypto.repository.TokenRepository;
-import com.dots.crypto.service.arch.ProcessorWrapper;
+import com.dots.crypto.service.command.ProcessorWithoutHooks;
 import com.dots.crypto.service.response.MessageBuilder;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.Hibernate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +24,15 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "telegram.commands.unsubscribe")
 public class UnsubscribeCommand extends ProcessorWithoutHooks<SendMessage> {
-    private final UserRepository userRepository;
+    private final TelegramUserRepository telegramUserRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final TokenRepository tokenRepository;
 
     @Override
     @Transactional
-    protected ProcessorWrapper<SendMessage> exec(final Update update,
-                                                 final TelegramLongPollingBot telegramBot,
-                                                 final ProcessorWrapper<SendMessage> result) throws Exception {
+    protected Process<SendMessage> exec(final Update update,
+                                        final TelegramLongPollingBot telegramBot,
+                                        final Process<SendMessage> result) throws Exception {
         final Message message = update.getMessage();
 
         final String[] args = extractArgs(message.getText());
@@ -43,8 +43,8 @@ public class UnsubscribeCommand extends ProcessorWithoutHooks<SendMessage> {
         final String contract = args[1];
         final long chatId = message.getChatId();
 
-        final User user = userRepository.findById(chatId).orElse(null);
-        if (user == null) {
+        final TelegramUser telegramUser = telegramUserRepository.findById(chatId).orElse(null);
+        if (telegramUser == null) {
             throw new CommandLogicException("Вы не подписаны на какие-либо обновления");
         }
 
@@ -53,12 +53,12 @@ public class UnsubscribeCommand extends ProcessorWithoutHooks<SendMessage> {
             throw new CommandLogicException("Вы не подписаны на обновления токена -> " + contract);
         }
 
-        final Subscription subscription = subscriptionRepository.findByUser_ChatIdAndToken_Contract(chatId, contract).orElse(null);
+        final Subscription subscription = subscriptionRepository.findByTelegramUser_ChatIdAndToken_Contract(chatId, contract).orElse(null);
         if (subscription == null) {
             throw new CommandLogicException("Вы не подписаны на обновления токена -> " + contract);
         }
 
-        userRepository.removeSubscription(chatId, subscription.getId());
+        telegramUserRepository.removeSubscription(chatId, subscription.getId());
 
         subscriptionRepository.delete(subscription);
 

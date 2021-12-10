@@ -24,5 +24,5 @@ public class Subscription {
     private Token token;
 
     @ManyToOne
-    private User user;
+    private TelegramUser telegramUser;
 }

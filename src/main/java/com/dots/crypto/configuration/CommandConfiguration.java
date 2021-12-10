@@ -1,6 +1,6 @@
-package com.dots.crypto.configurattion;
+package com.dots.crypto.configuration;
 
-import com.dots.crypto.service.arch.Processor;
+import com.dots.crypto.service.command.Processor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

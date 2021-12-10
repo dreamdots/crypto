@@ -1,6 +1,7 @@
-package com.dots.crypto.service.command;
+package com.dots.crypto.service.command.impl;
 
-import com.dots.crypto.service.arch.ProcessorWrapper;
+import com.dots.crypto.model.Process;
+import com.dots.crypto.service.command.ProcessorWithoutHooks;
 import com.dots.crypto.service.response.MessageBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -18,9 +19,9 @@ public class StartCommand extends ProcessorWithoutHooks<SendMessage> {
             "/mysubscriptions - список всех подписок";
 
     @Override
-    protected ProcessorWrapper<SendMessage> exec(final Update update,
-                                                 final TelegramLongPollingBot telegramBot,
-                                                 final ProcessorWrapper<SendMessage> result)  throws Exception {
+    protected Process<SendMessage> exec(final Update update,
+                                        final TelegramLongPollingBot telegramBot,
+                                        final Process<SendMessage> result)  throws Exception {
         result.setResult(MessageBuilder.message(update.getMessage().getChatId(), RESPONSE_MSG));
         return result;
     }

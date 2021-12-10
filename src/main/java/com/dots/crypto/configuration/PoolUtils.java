@@ -1,4 +1,4 @@
-package com.dots.crypto.configurattion;
+package com.dots.crypto.configuration;
 
 import lombok.experimental.UtilityClass;
 

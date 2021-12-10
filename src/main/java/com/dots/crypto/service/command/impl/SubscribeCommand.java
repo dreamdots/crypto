@@ -1,14 +1,15 @@
-package com.dots.crypto.service.command;
+package com.dots.crypto.service.command.impl;
 
 import com.dots.crypto.exception.CommandLogicException;
 import com.dots.crypto.exception.CommandSyntaxException;
+import com.dots.crypto.model.Process;
 import com.dots.crypto.model.Subscription;
+import com.dots.crypto.model.TelegramUser;
 import com.dots.crypto.model.Token;
-import com.dots.crypto.model.User;
 import com.dots.crypto.repository.SubscriptionRepository;
-import com.dots.crypto.repository.UserRepository;
+import com.dots.crypto.repository.TelegramUserRepository;
 import com.dots.crypto.repository.TokenRepository;
-import com.dots.crypto.service.arch.ProcessorWrapper;
+import com.dots.crypto.service.command.ProcessorWithoutHooks;
 import com.dots.crypto.service.response.MessageBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,15 +24,15 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "telegram.commands.subscribe")
 public class SubscribeCommand extends ProcessorWithoutHooks<SendMessage> {
-    private final UserRepository userRepository;
+    private final TelegramUserRepository telegramUserRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final TokenRepository tokenRepository;
 
     @Override
     @Transactional
-    protected ProcessorWrapper<SendMessage> exec(final Update update,
-                                                 final TelegramLongPollingBot telegramBot,
-                                                 final ProcessorWrapper<SendMessage> result) throws Exception {
+    protected Process<SendMessage> exec(final Update update,
+                                        final TelegramLongPollingBot telegramBot,
+                                        final Process<SendMessage> result) throws Exception {
         final Message message = update.getMessage();
 
         final String[] args = extractArgs(message.getText());
@@ -42,18 +43,18 @@ public class SubscribeCommand extends ProcessorWithoutHooks<SendMessage> {
         final long threshold = Long.parseLong(args[2]);
         final String contract = args[1];
 
-        final User user = userRepository.findOrSave(
+        final TelegramUser telegramUser = telegramUserRepository.findOrSave(
                 message.getChatId(),
-                userRepository,
+                telegramUserRepository,
                 () -> {
-                    final User u = new User();
+                    final TelegramUser u = new TelegramUser();
                     u.setChatId(message.getChatId());
                     u.setUserId(update.getMessage().getFrom().getId());
                     return u;
                 }
         );
 
-        if (subscriptionRepository.existsByUser_ChatIdAndToken_Contract(message.getChatId(), contract)) {
+        if (subscriptionRepository.existsByTelegramUser_ChatIdAndToken_Contract(message.getChatId(), contract)) {
             throw new CommandLogicException("Вы уже подписаны на обновления токена -> " + contract);
         }
 
@@ -69,10 +70,10 @@ public class SubscribeCommand extends ProcessorWithoutHooks<SendMessage> {
         Subscription subscription = new Subscription();
         subscription.setThreshold(threshold);
         subscription.setToken(token);
-        subscription.setUser(user);
+        subscription.setTelegramUser(telegramUser);
         subscription = subscriptionRepository.save(subscription);
 
-        userRepository.addNewSubscription(message.getChatId(), subscription.getId());
+        telegramUserRepository.addNewSubscription(message.getChatId(), subscription.getId());
 
         result.setResult(MessageBuilder.message(update.getMessage().getChatId(), DEFAULT_RESPONSE));
         return result;

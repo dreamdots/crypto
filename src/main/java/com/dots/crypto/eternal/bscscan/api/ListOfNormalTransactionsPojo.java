@@ -1,11 +1,11 @@
 package com.dots.crypto.eternal.bscscan.api;
 
+import com.dots.crypto.eternal.bscscan.BscscanApiRequest;
 import com.dots.crypto.eternal.bscscan.RequestAction;
 import com.dots.crypto.eternal.bscscan.RequestModule;
 import com.dots.crypto.eternal.bscscan.RequestSort;
-import com.dots.crypto.eternal.common.ApiRequest;
-import com.dots.crypto.eternal.common.RequestMethod;
 import com.dots.crypto.eternal.bscscan.response.TransactionPojo;
+import com.dots.crypto.eternal.common.RequestMethod;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.*;
@@ -17,7 +17,7 @@ import java.util.List;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class ListOfNormalTransactionsPojo extends ApiRequest<List<TransactionPojo>> {
+public class ListOfNormalTransactionsPojo extends BscscanApiRequest<List<TransactionPojo>> {
     private final JavaType type = TypeFactory.defaultInstance().constructCollectionType(List.class, TransactionPojo.class);
     private final RequestAction action = RequestAction.TXLIST;
     private final RequestModule module = RequestModule.ACCOUNT;

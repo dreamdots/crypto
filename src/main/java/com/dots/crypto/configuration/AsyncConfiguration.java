@@ -1,4 +1,4 @@
-package com.dots.crypto.configurattion;
+package com.dots.crypto.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

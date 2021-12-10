@@ -1,6 +1,6 @@
 package com.dots.crypto.telegram;
 
-import com.dots.crypto.service.arch.Router;
+import com.dots.crypto.service.router.Router;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

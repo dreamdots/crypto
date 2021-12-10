@@ -12,8 +12,8 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
-public class User {
+@Table(name = "telegram_users")
+public class TelegramUser {
 
     @Id
     @Column(name = "chat_id", nullable = false)

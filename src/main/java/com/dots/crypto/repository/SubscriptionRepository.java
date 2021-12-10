@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, Integer>, RepositoryService<Subscription, Integer> {
-    Optional<Subscription> findByUser_ChatIdAndToken_Contract(final long chatId, final String contract);
-    boolean existsByUser_ChatIdAndToken_Contract(final long chatId, final String contract);
-    List<Subscription> findAllByUser_ChatId(final long chatId);
+    Optional<Subscription> findByTelegramUser_ChatIdAndToken_Contract(final long chatId, final String contract);
+    boolean existsByTelegramUser_ChatIdAndToken_Contract(final long chatId, final String contract);
+    List<Subscription> findAllByTelegramUser_ChatId(final long chatId);
 }
